@@ -5,6 +5,8 @@ ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
+RUN apt-get update && apt-get install -y software-properties-common
+RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y git build-essential \
     python3.11 python3.11-dev python3.11-venv python3-pip \
