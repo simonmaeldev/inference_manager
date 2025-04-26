@@ -6,6 +6,7 @@ services:
       - "8000:8000"  # llama-cpp-python API
     volumes:
       - "C:/Users/ApprenTyr/.lmstudio/models/:/app/models/"
+      - "./stable-diffusion-webui:/app/stable-diffusion-webui"
       - "C:/Users/ApprenTyr/Documents/StabilityMatrix-win-x64/Data/Models/StableDiffusion:/app/stable-diffusion-webui/models/Stable-diffusion"
       - "C:/Users/ApprenTyr/Documents/StabilityMatrix-win-x64/Data/Models/Lora:/app/stable-diffusion-webui/models/Lora"
     environment:
