@@ -1,0 +1,5 @@
+I want to do local inferences for AI: txt2txt, txt2img, img2img, img2txt. For that I want to use localAI, which gives a docker image for easy management.
+There will be a problem with loading the different models, so I want to make an inference manager. It's goal is to take all the requests, register them into queues of different types, and process each queue completely (until it is empty) before switching to another queue.
+This is going to be a server that exposes an API and is also a Model Context Protocol server. You can find the documentation of how to create a MCP into @/docs/mcp_doc.md 
+The server is in python, with fastAPI. I want to create a docker image around the localAI image and integrate my server in it. You can find the documentation for localAI in @/docs/localAI_doc.md 
+Do you have clarification questions?
