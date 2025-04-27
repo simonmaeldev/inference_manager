@@ -1,15 +1,17 @@
-version: '3.8'
-
 services:
   localai:
     image: localai/localai:latest-gpu-nvidia-cuda-12
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 1m
+      timeout: 20m
+      retries: 5
     ports:
-      - "8080:8080"
-    volumes:
-      - ./models:/build/models
+      - 8080:8080
     environment:
       - DEBUG=true
-      - MODELS_PATH=/build/models
+    volumes:
+      - ./models:/build/models:cached
     deploy:
       resources:
         reservations:

@@ -2,10 +2,16 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including LocalAI requirements
 RUN apt-get update && apt-get install -y \
     build-essential \
+    cmake \
+    g++ \
+    git \
     && rm -rf /var/lib/apt/lists/*
+
+# Create models directory for LocalAI
+RUN mkdir -p /app/models
 
 # Install Python dependencies
 COPY requirements.txt .
