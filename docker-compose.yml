@@ -1,20 +1,33 @@
+version: '3.8'
+
 services:
-  inference:
-    build: .
+  localai:
+    image: localai/localai:latest-gpu-nvidia-cuda-12
     ports:
-      - "7860:7860"  # Stable Diffusion Web UI
-      - "8000:8000"  # llama-cpp-python API
+      - "8080:8080"
     volumes:
-      - "C:/Users/ApprenTyr/.lmstudio/models/:/app/models/"
-      - "./stable-diffusion-webui:/app/stable-diffusion-webui"
-      - "C:/Users/ApprenTyr/Documents/StabilityMatrix-win-x64/Data/Models/StableDiffusion:/app/stable-diffusion-webui/models/Stable-diffusion"
-      - "C:/Users/ApprenTyr/Documents/StabilityMatrix-win-x64/Data/Models/Lora:/app/stable-diffusion-webui/models/Lora"
+      - ./models:/build/models
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
+      - DEBUG=true
+      - MODELS_PATH=/build/models
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: all
+              count: 1
               capabilities: [gpu]
+    restart: unless-stopped
+
+  inference-manager:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - localai
+    volumes:
+      - ./models:/app/models
+    environment:
+      - LOCALAI_URL=http://localai:8080
+      - DEBUG=true
+    restart: unless-stopped
