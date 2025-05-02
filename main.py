@@ -62,7 +62,6 @@ app.add_middleware(
 
 # Setup MCP server
 mcp_server = setup_mcp_server()
-app.mount("/mcp", mcp_server.app)
 
 @app.get("/health")
 async def health_check():

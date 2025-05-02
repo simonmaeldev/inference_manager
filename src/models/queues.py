@@ -2,7 +2,7 @@ from collections import deque
 from typing import Deque, Dict, Set, List, Optional, Any
 from datetime import datetime
 from pydantic import BaseModel
-from models.schemas import InferenceRequest
+from src.models.schemas import InferenceRequest
 from time import perf_counter
 
 class ErrorRecord(BaseModel):

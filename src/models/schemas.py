@@ -4,7 +4,7 @@ import asyncio
 from pathlib import Path
 from abc import abstractmethod
 
-from utils.localai_client import post_chat_completion, post_image_generation
+from src.utils.localai_client import post_chat_completion, post_image_generation
 
 class InferenceRequest(BaseModel):
     """Base request model with future support and processing"""

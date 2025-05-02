@@ -1,14 +1,26 @@
-from mcp.server.fastmcp import FastMCP
-from models.schemas import *
-from models.queues import InferenceQueues
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
+from mcp.server.fastmcp import Context, FastMCP
+from src.models.schemas import *
+from src.models.queues import InferenceQueues
 from fastapi import HTTPException
 import logging
 from time import perf_counter
 
 queues = InferenceQueues()
 
+@dataclass
+class AppContext:
+    queues: InferenceQueues
+
+@asynccontextmanager
+async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
+    """Manage application lifecycle with queues"""
+    yield AppContext(queues=queues)
+
 def setup_mcp_server():
-    mcp = FastMCP("inference-manager")
+    mcp = FastMCP("inference-manager", lifespan=app_lifespan)
     
     async def process_queue():
         """Process all requests in priority order"""
