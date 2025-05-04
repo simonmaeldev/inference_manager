@@ -1,57 +1,21 @@
-import logging
-from fastapi import FastAPI, Request
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.routes.mcp import setup_mcp_server
+from mcp.server.fastmcp import FastMCP
 import uvicorn
-import time
-from datetime import datetime
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+from src.routes.tools import Tools
 
+
+# Create FastAPI app
 app = FastAPI(
     title="LocalAI Inference Manager",
     description="Queue-based inference server for LocalAI",
-    version="0.1.0"
+    version="0.1.0",
+    docs_url="/docs"
 )
 
-async def log_request(request: Request, call_next):
-    """Middleware to log incoming requests and responses"""
-    start_time = time.time()
-    
-    # Log request details
-    logger.info(f"Request: {request.method} {request.url.path}")
-    
-    try:
-        response = await call_next(request)
-    except Exception as e:
-        logger.error(f"Request failed: {str(e)}")
-        raise
-    
-    # Calculate processing time
-    process_time = (time.time() - start_time) * 1000
-    formatted_time = f"{process_time:.2f}ms"
-    
-    # Log response details
-    logger.info(
-        f"Response: {request.method} {request.url.path} "
-        f"Status: {response.status_code} Time: {formatted_time}"
-    )
-    
-    return response
-
-# Add request logging middleware
-app.middleware('http')(log_request)
-
-# Setup CORS
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -60,43 +24,58 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Setup MCP server
-mcp_server = setup_mcp_server()
+# Create MCP server
+mcp = FastMCP("N8N Tools")
+
 
 @app.get("/health")
 async def health_check():
     """Basic health check endpoint"""
     return {"status": "healthy", "version": app.version}
 
-@app.get("/queue-status")
-async def queue_status():
-    """Get current queue status and system metrics"""
-    from src.routes.mcp import queues
-    import psutil
+# Register tools with MCP
+@mcp.tool()
+def add(a: int, b: int) -> int:
+    """Add two numbers together"""
+    return Tools.add(a, b)
+
+@mcp.tool()
+async def generate_youtube_thumbnail(prompt: str) -> str:
+    """Generate a youtube thumbnail corresponding to the prompt.
     
-    # Get queue metrics
-    queue_metrics = {
-        model: {
-            "pending_requests": len(queue),
-            "priority": queues.priority_order.index(next(
-                t for t, models in queues.model_sets.items()
-                if model in models
-            )) + 1  # 1-based priority
-        }
-        for model, queue in queues.queues.items()
-    }
+    Args:
+        prompt: The prompt to generate the image
+    """
+    result = await Tools.generate_image(prompt, size="640x360")
+    return f"Image generated: {result.get('url', 'No URL returned')}"
+
+# Register FastAPI endpoints
+@app.get("/add")
+def api_add(a: int, b: int):
+    return {"result": Tools.add(a, b)}
+
+@app.post("/generate-image")
+async def api_generate_image(prompt: str, model: str = "flux.1-dev", step: int = 50, size: str = "640x360"):
+    return await Tools.generate_image(prompt, model, step, size)
+
+@mcp.tool()
+async def generate_text(messages: list, model: str = "gpt-4", temperature: float = 0.7) -> dict:
+    """Generate text using the local API service.
     
-    # Get system metrics
-    system_metrics = {
-        "cpu_percent": psutil.cpu_percent(),
-        "memory_percent": psutil.virtual_memory().percent,
-        "timestamp": datetime.now().isoformat()
-    }
-    
-    return {
-        "queues": queue_metrics,
-        "system": system_metrics
-    }
+    Args:
+        messages: List of chat messages with role and content
+        model: The model to use for generation
+        temperature: Sampling temperature
+    """
+    result = await Tools.generate_text(messages, model, temperature)
+    return f"Text generated: {result.get('choices', [{}])[0].get('message', {}).get('content', 'No content returned')}"
+
+@app.post("/generate-text")
+async def api_generate_text(messages: list, model: str = "gpt-4", temperature: float = 0.7):
+    return await Tools.generate_text(messages, model, temperature)
+
+# Mount MCP server to FastAPI
+app.mount("/mcp", mcp.sse_app())
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

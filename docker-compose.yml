@@ -1,6 +1,9 @@
 services:
   localai:
-    image: localai/localai:latest-gpu-nvidia-cuda-12
+    image: localai/localai:v2.26.0-aio-gpu-nvidia-cuda-12
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile-localai
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
       interval: 1m
@@ -12,6 +15,7 @@ services:
       - DEBUG=true
     volumes:
       - ./models:/build/models:cached
+      - ./generated-images:/generated-images:cached
     deploy:
       resources:
         reservations:
@@ -27,9 +31,21 @@ services:
       - "8000:8000"
     depends_on:
       - localai
-    volumes:
-      - ./models:/app/models
     environment:
       - LOCALAI_URL=http://localai:8080
       - DEBUG=true
     restart: unless-stopped
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    depends_on:
+      - inference-manager
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+
+volumes:
+  n8n_data:
