@@ -11,7 +11,6 @@ class InferenceRequest(BaseModel):
     model: str
     future: Optional[asyncio.Future] = None
     fulfill: Optional[Callable[[Any], None]] = None
-    queue_time: Optional[float] = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -92,13 +91,3 @@ class Img2TxtRequest(InferenceRequest):
         )
         self.fulfill(result)
         return result
-
-def validate_model(model_type: str, model: str) -> bool:
-    """Validate model is supported for given type"""
-    model_sets = {
-        "txt2txt": {"Qwen2.5-32B-Instruct"},
-        "txt2img": {"Flux-Dev"},
-        "img2img": {"Flux-Dev"},
-        "img2txt": {"Qwen2.5-VL-32B-Instruct"}
-    }
-    return model in model_sets.get(model_type, set())

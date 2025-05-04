@@ -21,24 +21,6 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
 
 def setup_mcp_server():
     mcp = FastMCP("inference-manager", lifespan=app_lifespan)
-    
-    async def process_queue():
-        """Process all requests in priority order"""
-        for model_type in queues.priority_order:
-            for model in queues.model_sets[model_type]:
-                while queues.queues[model]:
-                    request = queues.queues[model].popleft()
-                    start_time = perf_counter()
-                    queue_wait_time = start_time - request.queue_time
-                    try:
-                        await request.process()
-                        queues.record_metrics(request, start_time, queue_wait_time, True)
-                    except Exception as e:
-                        logging.error(f"Error processing {request.__class__.__name__} request: {str(e)}")
-                        queues.record_error(request, e)
-                        queues.record_metrics(request, start_time, queue_wait_time, False)
-                        request.future.set_exception(e)
-    
     @mcp.tool()
     async def txt2txt(model: str, messages: List[dict], temperature: float = 0.7) -> str:
         """
@@ -67,10 +49,7 @@ def setup_mcp_server():
             
         Example Response:
             "Hello! How can I help you today?"
-        """
-        if not validate_model("txt2txt", model):
-            raise HTTPException(status_code=400, detail=f"Model {model} not supported for text-to-text")
-            
+        """            
         req = Txt2TxtRequest(model=model, messages=messages, temperature=temperature)
         req.queue_time = perf_counter()
         queues.queues[req.model].append(req)
@@ -105,8 +84,6 @@ def setup_mcp_server():
         Example Response:
             "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AA..."
         """
-        if not validate_model("txt2img", model):
-            raise HTTPException(status_code=400, detail=f"Model {model} not supported for text-to-image")
             
         req = Txt2ImgRequest(model=model, prompt=prompt, height=height, width=width)
         req.queue_time = perf_counter()

@@ -46,8 +46,8 @@ async def generate_youtube_thumbnail(prompt: str) -> str:
     Args:
         prompt: The prompt to generate the image
     """
-    result = await Tools.generate_image(prompt, size="640x360")
-    return f"Image generated: {result.get('url', 'No URL returned')}"
+    result = await Tools.text_to_image(prompt, model="Flux-Dev", width=640, height=360)
+    return f"Image generated: {result[0] if result else 'No image returned'}"
 
 # Register FastAPI endpoints
 @app.get("/add")
@@ -77,5 +77,26 @@ async def api_generate_text(messages: list, model: str = "gpt-4", temperature: f
 # Mount MCP server to FastAPI
 app.mount("/mcp", mcp.sse_app())
 
+async def process_queue():
+    """Process all requests in priority order"""
+    while True:
+        for model_type in queues.priority_order:
+            for model in queues.model_sets[model_type]:
+                while queues.queues[model]:
+                    request = queues.queues[model].popleft()
+                    try:
+                        await request.process()
+                        request.future.set_result(None)
+                    except Exception as e:
+                        request.future.set_exception(e)
+
 if __name__ == "__main__":
+    import asyncio
+    from src.models.queues import InferenceQueues
+    queues = InferenceQueues()
+    
+    # Start queue processing in background
+    asyncio.create_task(process_queue())
+    
+    # Start server
     uvicorn.run(app, host="0.0.0.0", port=8000)
