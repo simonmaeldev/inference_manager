@@ -1,18 +1,29 @@
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mcp.server.fastmcp import FastMCP
 import uvicorn
 
 from src.routes.tools import Tools
+import asyncio
+from src.models.queues import InferenceQueues
+queues = InferenceQueues()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    asyncio.create_task(queues.process_queues_forever())
+    yield
+    # Shutdown logic would go here
 
 # Create FastAPI app
 app = FastAPI(
     title="LocalAI Inference Manager",
     description="Queue-based inference server for LocalAI",
     version="0.1.0",
-    docs_url="/docs"
+    docs_url="/docs",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
@@ -46,8 +57,9 @@ async def generate_youtube_thumbnail(prompt: str) -> str:
     Args:
         prompt: The prompt to generate the image
     """
-    result = await Tools.text_to_image(prompt, model="Flux-Dev", width=640, height=360)
-    return f"Image generated: {result[0] if result else 'No image returned'}"
+    result = await Tools.text_to_image(prompt, queues, model="Flux-Dev", width=640, height=360)
+    return "\n".join(result) if result else 'No image returned'
+
 
 # Register FastAPI endpoints
 @app.get("/add")
@@ -56,7 +68,7 @@ def api_add(a: int, b: int):
 
 @app.post("/generate-image")
 async def api_generate_image(prompt: str, model: str = "flux.1-dev", step: int = 50, size: str = "640x360"):
-    return await Tools.generate_image(prompt, model, step, size)
+    return await Tools.generate_image(prompt, queues, model, step, size)
 
 @mcp.tool()
 async def generate_text(messages: list, model: str = "gpt-4", temperature: float = 0.7) -> dict:
@@ -77,26 +89,6 @@ async def api_generate_text(messages: list, model: str = "gpt-4", temperature: f
 # Mount MCP server to FastAPI
 app.mount("/mcp", mcp.sse_app())
 
-async def process_queue():
-    """Process all requests in priority order"""
-    while True:
-        for model_type in queues.priority_order:
-            for model in queues.model_sets[model_type]:
-                while queues.queues[model]:
-                    request = queues.queues[model].popleft()
-                    try:
-                        await request.process()
-                        request.future.set_result(None)
-                    except Exception as e:
-                        request.future.set_exception(e)
-
 if __name__ == "__main__":
-    import asyncio
-    from src.models.queues import InferenceQueues
-    queues = InferenceQueues()
-    
-    # Start queue processing in background
-    asyncio.create_task(process_queue())
-    
     # Start server
     uvicorn.run(app, host="0.0.0.0", port=8000)

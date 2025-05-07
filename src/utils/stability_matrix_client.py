@@ -33,12 +33,95 @@ async def txt2img(
     """
     payload = {
         "prompt": prompt,
+        "negative_prompt": "",
         "steps": steps,
         "width": width,
         "height": height,
         "cfg_scale": cfg_scale,
-        **kwargs
+        "batch_size": 1,
+        "n_iter": 1,
+        "sampler_name": "Euler",
+        "scheduler": "Simple",
+        "distilled_cfg_scale": 3.5,
+        "denoising_strength": 0.7,
+        "seed": -1,
+        "seed_enable_extras": True,
+        "subseed": -1,
+        "subseed_strength": 0,
+        "seed_resize_from_h": -1,
+        "seed_resize_from_w": -1,
+        "tiling": False,
+        "restore_faces": False,
+        "enable_hr": False,
+        "hr_scale": 2,
+        "hr_upscaler": "Latent",
+        "hr_second_pass_steps": 0,
+        "hr_resize_x": 0,
+        "hr_resize_y": 0,
+        "hr_prompt": "",
+        "hr_negative_prompt": "",
+        "hr_cfg": 1,
+        "hr_distilled_cfg": 3.5,
+        "styles": [],
+        "override_settings": {},
+        "override_settings_restore_afterwards": True,
+        "script_name": None,
+        "script_args": [],
+        "do_not_save_samples": False,
+        "do_not_save_grid": False,
+        "disable_extra_networks": False,
+        "comments": {},
+        "s_churn": 0.0,
+        "s_min_uncond": 0.0,
+        "s_noise": 1.0,
+        "s_tmin": 0.0,
+        "s_tmax": None,
+        "alwayson_scripts": {
+            "API payload": {"args": []},
+            "ControlNet": {"args": [
+                {
+                    "batch_image_dir": "", "batch_input_gallery": None, "batch_mask_dir": "", "batch_mask_gallery": None,
+                    "control_mode": "Balanced", "enabled": False, "generated_image": None, "guidance_end": 1.0,
+                    "guidance_start": 0.0, "hr_option": "Both", "image": None, "image_fg": None, "input_mode": "simple",
+                    "mask_image": None, "mask_image_fg": None, "model": "None", "module": "None", "pixel_perfect": False,
+                    "processor_res": -1, "resize_mode": "Crop and Resize", "save_detected_map": True, "threshold_a": -1,
+                    "threshold_b": -1, "use_preview_as_input": False, "weight": 1
+                },
+                {
+                    "batch_image_dir": "", "batch_input_gallery": None, "batch_mask_dir": "", "batch_mask_gallery": None,
+                    "control_mode": "Balanced", "enabled": False, "generated_image": None, "guidance_end": 1.0,
+                    "guidance_start": 0.0, "hr_option": "Both", "image": None, "image_fg": None, "input_mode": "simple",
+                    "mask_image": None, "mask_image_fg": None, "model": "None", "module": "None", "pixel_perfect": False,
+                    "processor_res": -1, "resize_mode": "Crop and Resize", "save_detected_map": True, "threshold_a": -1,
+                    "threshold_b": -1, "use_preview_as_input": False, "weight": 1
+                },
+                {
+                    "batch_image_dir": "", "batch_input_gallery": None, "batch_mask_dir": "", "batch_mask_gallery": None,
+                    "control_mode": "Balanced", "enabled": False, "generated_image": None, "guidance_end": 1.0,
+                    "guidance_start": 0.0, "hr_option": "Both", "image": None, "image_fg": None, "input_mode": "simple",
+                    "mask_image": None, "mask_image_fg": None, "model": "None", "module": "None", "pixel_perfect": False,
+                    "processor_res": -1, "resize_mode": "Crop and Resize", "save_detected_map": True, "threshold_a": -1,
+                    "threshold_b": -1, "use_preview_as_input": False, "weight": 1
+                }
+            ]},
+            "DynamicThresholding (CFG-Fix) Integrated": {"args": [False, 7, 1, "Constant", 0, "Constant", 0, 1, "enable", "MEAN", "AD", 1]},
+            "Extra options": {"args": []},
+            "FreeU Integrated (SD 1.x, SD 2.x, SDXL)": {"args": [False, 1.01, 1.02, 0.99, 0.95, 0, 1]},
+            "Kohya HRFix Integrated": {"args": [False, 3, 2, 0, 0.35, True, "bicubic", "bicubic"]},
+            "LatentModifier Integrated": {"args": [False, 0, "anisotropic", 0, "reinhard", 100, 0, "subtract", 0, 0, "gaussian", "add", 0, 100, 127, 0, "hard_clamp", 5, 0, "None", "None"]},
+            "MultiDiffusion Integrated": {"args": [False, "MultiDiffusion", 768, 768, 64, 4]},
+            "Never OOM Integrated": {"args": [False, False]},
+            "PerturbedAttentionGuidance Integrated": {"args": [False, 3, 0, 0, 1]},
+            "Refiner": {"args": [False, "", 0.8]},
+            "Sampler": {"args": [steps, "Euler", "Simple"]},
+            "Seed": {"args": [-1, False, -1, 0, 0, 0]},
+            "SelfAttentionGuidance Integrated (SD 1.x, SD 2.x, SDXL)": {"args": [False, 0.5, 2, 1]},
+            "StyleAlign Integrated": {"args": [False, 1]}
+        }
     }
+    
+    # Override with any additional kwargs
+    payload.update(kwargs)
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(

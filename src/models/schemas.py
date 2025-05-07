@@ -4,7 +4,8 @@ import asyncio
 from pathlib import Path
 from abc import abstractmethod
 
-from src.utils.localai_client import post_chat_completion, post_image_generation
+from src.utils.localai_client import post_chat_completion
+from src.utils.stability_matrix_client import txt2img, img2img
 
 class InferenceRequest(BaseModel):
     """Base request model with future support and processing"""
@@ -47,14 +48,15 @@ class Txt2ImgRequest(InferenceRequest):
     prompt: str
     height: int = 512
     width: int = 512
+    steps: int = 50
     
     async def process(self):
         """Process text-to-image request"""
-        result = await post_image_generation(
-            model=self.model,
+        result = await txt2img(
             prompt=self.prompt,
             height=self.height,
-            width=self.width
+            width=self.width,
+            steps=self.steps
         )
         self.fulfill(result)
         return result
@@ -65,14 +67,16 @@ class Img2ImgRequest(InferenceRequest):
     prompt: str
     height: int = 512
     width: int = 512
+    steps: int = 50
     
     async def process(self):
         """Process image-to-image request"""
-        result = await post_image_generation(
-            model=self.model,
+        result = await img2img(
+            init_images=[self.file],
             prompt=self.prompt,
             height=self.height,
-            width=self.width
+            width=self.width,
+            steps=self.steps
         )
         self.fulfill(result)
         return result
