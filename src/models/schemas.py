@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import List, Optional, Callable, Any, Dict
 import asyncio
 from pathlib import Path
@@ -9,19 +9,16 @@ from src.utils.stability_matrix_client import txt2img, img2img
 
 class InferenceRequest(BaseModel):
     """Base request model with future support and processing"""
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     model: str
-    future: Optional[asyncio.Future] = None
-    fulfill: Optional[Callable[[Any], None]] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        if not Path(f"models/{self.model}").exists():
-            raise ValueError(f"Model {self.model} not found in models directory")
-        self.future = asyncio.Future()
+    future: asyncio.Future = Field(default_factory=asyncio.Future)
+    fulfill: Callable[[Any], None] = None
+    
+    @model_validator(mode='after')
+    def setup_fulfill(self) -> 'InferenceRequest':
+        """Set up the fulfill function after model initialization"""
         self.fulfill = lambda result: self.future.set_result(result)
+        return self
     
     @abstractmethod
     async def process(self):

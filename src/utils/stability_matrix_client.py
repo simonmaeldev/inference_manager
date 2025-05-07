@@ -5,7 +5,9 @@ from datetime import datetime
 from typing import List, Any
 
 # Base URL for Stability Matrix API - configured via STABILITY_MATRIX_URL environment variable
-STABILITY_MATRIX_BASE_URL = os.getenv("STABILITY_MATRIX_URL", "http://localhost:7860")
+STABILITY_MATRIX_BASE_URL = os.getenv("STABILITY_MATRIX_URL", "http://localhost:7861")
+# Timeout settings for API calls (10 minutes for read, 2 minutes for connect)
+API_TIMEOUT = httpx.Timeout(600.0, connect=120.0)
 
 async def txt2img(
     prompt: str,
@@ -123,10 +125,11 @@ async def txt2img(
     # Override with any additional kwargs
     payload.update(kwargs)
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
         resp = await client.post(
             f"{STABILITY_MATRIX_BASE_URL}/sdapi/v1/txt2img",
-            json=payload
+            json=payload,
+            timeout=API_TIMEOUT
         )
         resp.raise_for_status()
         response = resp.json()
@@ -178,10 +181,11 @@ async def img2img(
         **kwargs
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
         resp = await client.post(
             f"{STABILITY_MATRIX_BASE_URL}/sdapi/v1/img2img",
-            json=payload
+            json=payload,
+            timeout=API_TIMEOUT
         )
         resp.raise_for_status()
         response = resp.json()
