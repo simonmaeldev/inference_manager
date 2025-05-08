@@ -15,7 +15,7 @@ class InferenceQueues:
     def __init__(self):
         # Model sets for each request type
         self.model_sets = {
-            "txt2txt": {"Qwen2.5-32B-Instruct"},
+            "txt2txt": {"qwen3:32b"},
             "txt2img": {"Flux-Dev"},
             "img2img": {"Flux-Dev"},
             "img2txt": {"Qwen2.5-VL-32B-Instruct"}

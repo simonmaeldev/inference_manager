@@ -2,7 +2,7 @@ import httpx
 from typing import Dict, Any, List
 
 from src.models.queues import InferenceQueues
-from src.models.schemas import Txt2ImgRequest
+from src.models.schemas import Txt2ImgRequest, Txt2TxtRequest
 
 class Tools:
     @staticmethod
@@ -42,15 +42,17 @@ class Tools:
         return result if result else []
     
     @staticmethod
-    async def generate_text(messages: list, model: str = "gpt-4", temperature: float = 0.7) -> Dict[str, Any]:
-        """Generate text using the local API service"""
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "http://localai:8080/v1/chat/completions",
-                json={
-                    "model": model,
-                    "messages": messages,
-                    "temperature": temperature
-                }
-            )
-            return response.json()
+    async def generate_text(
+        messages: list,
+        queues: InferenceQueues,
+        model: str = "qwen3:32b",
+        temperature: float = 0.7
+    ) -> Dict[str, Any]:
+        """Generate text using the queue system"""
+        req = Txt2TxtRequest(
+            model=model,
+            messages=messages,
+            temperature=temperature
+        )
+        await queues.add_request(model, req)
+        return await req.future

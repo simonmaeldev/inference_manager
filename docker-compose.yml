@@ -1,0 +1,38 @@
+services:
+  inference-manager:
+    build: .
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    depends_on:
+      - inference-manager
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - C:/Users/ApprenTyr/.ollama/models:/models
+    environment:
+      - OLLAMA_MODELS=/models
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+volumes:
+  n8n_data:
+  ollama_models:

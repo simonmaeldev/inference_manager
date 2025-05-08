@@ -70,21 +70,13 @@ def api_add(a: int, b: int):
 async def api_generate_image(prompt: str, model: str = "flux.1-dev", step: int = 50, size: str = "640x360"):
     return await Tools.generate_image(prompt, queues, model, step, size)
 
-@mcp.tool()
-async def generate_text(messages: list, model: str = "gpt-4", temperature: float = 0.7) -> dict:
-    """Generate text using the local API service.
-    
-    Args:
-        messages: List of chat messages with role and content
-        model: The model to use for generation
-        temperature: Sampling temperature
-    """
-    result = await Tools.generate_text(messages, model, temperature)
-    return f"Text generated: {result.get('choices', [{}])[0].get('message', {}).get('content', 'No content returned')}"
-
-@app.post("/generate-text")
-async def api_generate_text(messages: list, model: str = "gpt-4", temperature: float = 0.7):
-    return await Tools.generate_text(messages, model, temperature)
+@app.post("/api/chat")
+async def api_generate_text(
+    messages: list,
+    model: str = "qwen3:32b",
+    temperature: float = 0.7
+):
+    return await Tools.generate_text(messages, queues, model, temperature)
 
 # Mount MCP server to FastAPI
 app.mount("/mcp", mcp.sse_app())

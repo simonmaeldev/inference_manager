@@ -4,7 +4,7 @@ import asyncio
 from pathlib import Path
 from abc import abstractmethod
 
-from src.utils.localai_client import post_chat_completion
+from src.utils.ollama_client import post_chat_completion
 from src.utils.stability_matrix_client import txt2img, img2img
 
 class InferenceRequest(BaseModel):
