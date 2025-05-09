@@ -8,6 +8,8 @@ services:
     environment:
       - STABILITY_MATRIX_URL=http://host.docker.internal:7861
       - OLLAMA_URL=http://host.docker.internal:11434
+    volumes:
+      - ./generated_images:/app/generated_images
     restart: unless-stopped
     networks:
       - app-network
@@ -21,6 +23,7 @@ services:
       - inference-manager
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./generated_images:/app/generated_images
     restart: unless-stopped
     networks:
       - app-network

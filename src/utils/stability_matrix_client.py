@@ -134,6 +134,19 @@ async def txt2img(
             )
             resp.raise_for_status()
             response = resp.json()
+            timestamp = datetime.now().strftime("%Y_%m_%d_%S")
+            # Use absolute path for more reliable file storage
+            image_dir = os.path.join(os.getcwd(), "generated_images")
+            os.makedirs(image_dir, exist_ok=True)
+            file_paths = []
+            for i, img_data in enumerate(response['images']):
+                img_bytes = base64.b64decode(img_data)
+                filename = f"{timestamp}_{i}.png"
+                filepath = os.path.join(image_dir, filename)
+                with open(filepath, "wb") as f:
+                    f.write(img_bytes)
+                file_paths.append(filepath)
+            return file_paths
     except httpx.ConnectError as e:
         raise RuntimeError(
             f"Failed to connect to Stability Matrix service at {STABILITY_MATRIX_BASE_URL}. "
@@ -143,17 +156,6 @@ async def txt2img(
         raise RuntimeError(
             f"Stability Matrix API request failed with status {e.response.status_code}: {e.response.text}"
         ) from e
-        timestamp = datetime.now().strftime("%Y_%m_%d_%S")
-        os.makedirs("generated_images", exist_ok=True)
-        file_paths = []
-        for i, img_data in enumerate(response['images']):
-            img_bytes = base64.b64decode(img_data)
-            filename = f"{timestamp}_{i}.png"
-            filepath = os.path.join("generated_images", filename)
-            with open(filepath, "wb") as f:
-                f.write(img_bytes)
-            file_paths.append(filepath)
-        return file_paths
 
 async def img2img(
     init_images: List[str],
