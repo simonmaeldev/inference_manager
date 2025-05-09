@@ -92,3 +92,8 @@ class Img2TxtRequest(InferenceRequest):
         )
         self.fulfill(result)
         return result
+
+class ChatRequest(BaseModel):
+    messages: List[Dict[str, str]]
+    model: str = "qwen3:32b"
+    temperature: float = 0.7

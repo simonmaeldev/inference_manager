@@ -125,14 +125,24 @@ async def txt2img(
     # Override with any additional kwargs
     payload.update(kwargs)
 
-    async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
-        resp = await client.post(
-            f"{STABILITY_MATRIX_BASE_URL}/sdapi/v1/txt2img",
-            json=payload,
-            timeout=API_TIMEOUT
-        )
-        resp.raise_for_status()
-        response = resp.json()
+    try:
+        async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
+            resp = await client.post(
+                f"{STABILITY_MATRIX_BASE_URL}/sdapi/v1/txt2img",
+                json=payload,
+                timeout=API_TIMEOUT
+            )
+            resp.raise_for_status()
+            response = resp.json()
+    except httpx.ConnectError as e:
+        raise RuntimeError(
+            f"Failed to connect to Stability Matrix service at {STABILITY_MATRIX_BASE_URL}. "
+            "Please ensure the service is running and accessible."
+        ) from e
+    except httpx.HTTPStatusError as e:
+        raise RuntimeError(
+            f"Stability Matrix API request failed with status {e.response.status_code}: {e.response.text}"
+        ) from e
         timestamp = datetime.now().strftime("%Y_%m_%d_%S")
         os.makedirs("generated_images", exist_ok=True)
         file_paths = []
@@ -181,13 +191,23 @@ async def img2img(
         **kwargs
     }
 
-    async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
-        resp = await client.post(
-            f"{STABILITY_MATRIX_BASE_URL}/sdapi/v1/img2img",
-            json=payload,
-            timeout=API_TIMEOUT
-        )
-        resp.raise_for_status()
-        response = resp.json()
-        return response['images']
+    try:
+        async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
+            resp = await client.post(
+                f"{STABILITY_MATRIX_BASE_URL}/sdapi/v1/img2img",
+                json=payload,
+                timeout=API_TIMEOUT
+            )
+            resp.raise_for_status()
+            response = resp.json()
+            return response['images']
+    except httpx.ConnectError as e:
+        raise RuntimeError(
+            f"Failed to connect to Stability Matrix service at {STABILITY_MATRIX_BASE_URL}. "
+            "Please ensure the service is running and accessible."
+        ) from e
+    except httpx.HTTPStatusError as e:
+        raise RuntimeError(
+            f"Stability Matrix API request failed with status {e.response.status_code}: {e.response.text}"
+        ) from e
 

@@ -3,7 +3,14 @@ services:
     build: .
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - STABILITY_MATRIX_URL=http://host.docker.internal:7861
+      - OLLAMA_URL=http://host.docker.internal:11434
     restart: unless-stopped
+    networks:
+      - app-network
 
   n8n:
     image: docker.n8n.io/n8nio/n8n
@@ -15,24 +22,15 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
     restart: unless-stopped
-
-  ollama:
-    image: ollama/ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    volumes:
-      - C:/Users/ApprenTyr/.ollama/models:/models
-    environment:
-      - OLLAMA_MODELS=/models
-    ports:
-      - "11434:11434"
-    restart: unless-stopped
+    networks:
+      - app-network
 
 volumes:
   n8n_data:
-  ollama_models:
+
+networks:
+  app-network:
+    name: app-network
+    driver: bridge
+  default:
+    external: false

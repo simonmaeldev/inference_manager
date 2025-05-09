@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mcp.server.fastmcp import FastMCP
 import uvicorn
 
+from src.models.schemas import ChatRequest
 from src.routes.tools import Tools
 import asyncio
 from src.models.queues import InferenceQueues
@@ -67,16 +68,12 @@ def api_add(a: int, b: int):
     return {"result": Tools.add(a, b)}
 
 @app.post("/generate-image")
-async def api_generate_image(prompt: str, model: str = "flux.1-dev", step: int = 50, size: str = "640x360"):
+async def api_generate_image(prompt: str, model: str = "Flux-Dev", step: int = 50, size: str = "640x360"):
     return await Tools.generate_image(prompt, queues, model, step, size)
 
 @app.post("/api/chat")
-async def api_generate_text(
-    messages: list,
-    model: str = "qwen3:32b",
-    temperature: float = 0.7
-):
-    return await Tools.generate_text(messages, queues, model, temperature)
+async def api_generate_text(request: ChatRequest):
+    return await Tools.generate_text(request.messages, queues, request.model, request.temperature)
 
 # Mount MCP server to FastAPI
 app.mount("/mcp", mcp.sse_app())
