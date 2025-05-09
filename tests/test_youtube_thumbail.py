@@ -57,8 +57,6 @@ async def test_generate_youtube_thumbnail_real():
 @pytest.mark.asyncio
 async def test_generate_youtube_thumbnail_mock(monkeypatch, base64_image, api_response_data):
     """Test the generate_youtube_thumbnail function with mocked API response"""
-    # Make sure models directory exists for validation
-    os.makedirs("models/Flux-Dev", exist_ok=True)
     
     # Create a mock httpx.AsyncClient and response
     mock_client = AsyncMock()
