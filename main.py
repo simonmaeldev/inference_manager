@@ -7,6 +7,7 @@ import uvicorn
 
 from src.models.schemas import ChatRequest
 from src.routes.tools import Tools
+from src.utils.ollama_client import get_ollama_tags
 import asyncio
 from src.models.queues import InferenceQueues
 queues = InferenceQueues()
@@ -36,15 +37,46 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create MCP server
-mcp = FastMCP("N8N Tools")
-
+# API Endpoints
+@app.get("/")
+async def root():
+    """Root endpoint that mimics Ollama's default response"""
+    print("Root endpoint called")
+    return "Ollama is running"
 
 @app.get("/health")
 async def health_check():
     """Basic health check endpoint"""
     return {"status": "healthy", "version": app.version}
 
+@app.get("/api/tags")
+async def list_models():
+    """List local models by querying Ollama API"""
+    print("Endpoint called: /api/tags")
+    return await get_ollama_tags()
+
+@app.post("/api/embed")
+async def generate_embeddings():
+    """Generate embeddings"""
+    print("Endpoint called: /api/embed")
+    return {"embeddings": []}
+
+@app.get("/add")
+def api_add(a: int, b: int):
+    return {"result": Tools.add(a, b)}
+
+@app.post("/generate-image")
+async def api_generate_image(prompt: str, model: str = "Flux-Dev", step: int = 50, size: str = "640x360"):
+    return await Tools.generate_image(prompt, queues, model, step, size)
+
+@app.post("/api/chat")
+async def api_generate_text(request: ChatRequest):
+    print("Endpoint called: /api/chat")
+    return await Tools.generate_text(request.messages, queues, request.model, request.temperature)
+
+
+# Create MCP server
+mcp = FastMCP("N8N Tools")
 # Register tools with MCP
 @mcp.tool()
 def add(a: int, b: int) -> int:
@@ -61,19 +93,6 @@ async def generate_youtube_thumbnail(prompt: str) -> str:
     result = await Tools.text_to_image(prompt, queues, model="Flux-Dev", width=640, height=360)
     return "\n".join(result) if result else 'No image returned'
 
-
-# Register FastAPI endpoints
-@app.get("/add")
-def api_add(a: int, b: int):
-    return {"result": Tools.add(a, b)}
-
-@app.post("/generate-image")
-async def api_generate_image(prompt: str, model: str = "Flux-Dev", step: int = 50, size: str = "640x360"):
-    return await Tools.generate_image(prompt, queues, model, step, size)
-
-@app.post("/api/chat")
-async def api_generate_text(request: ChatRequest):
-    return await Tools.generate_text(request.messages, queues, request.model, request.temperature)
 
 # Mount MCP server to FastAPI
 app.mount("/mcp", mcp.sse_app())

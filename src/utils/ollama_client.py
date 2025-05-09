@@ -39,3 +39,17 @@ async def post_chat_completion(
         )
         resp.raise_for_status()
         return resp.json()
+
+async def get_ollama_tags() -> Dict[str, Any]:
+    """Get available models/tags from Ollama API
+    
+    Returns:
+        Dict with models list from Ollama
+        
+    Raises:
+        httpx.HTTPStatusError: If request fails
+    """
+    async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
+        resp = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+        resp.raise_for_status()
+        return resp.json()
