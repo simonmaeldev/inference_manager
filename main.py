@@ -68,23 +68,8 @@ async def health_check():
     """Basic health check endpoint"""
     return {"status": "healthy", "version": app.version}
 
-@app.get("/api/tags")
-async def list_models():
-    """List local models by querying Ollama API"""
-    print("Endpoint called: /api/tags")
-    return await get_ollama_tags()
-
-@app.post("/api/embed")
-async def generate_embeddings():
-    """Generate embeddings"""
-    print("Endpoint called: /api/embed")
-    return {"embeddings": []}
-
-@app.get("/add")
-def api_add(a: int, b: int):
-    return {"result": Tools.add(a, b)}
-
-@app.post("/generate-image")
+# Regular API endpoints
+@app.post("/api/generate-image")
 async def api_generate_image(prompt: str, model: str = "Flux-Dev", step: int = 50, size: str = "640x360"):
     return await Tools.generate_image(prompt, queues, model, step, size)
 
