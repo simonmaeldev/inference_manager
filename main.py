@@ -37,13 +37,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API Endpoints
-@app.get("/")
-async def root():
+# Ollama-compatible endpoints (for N8N Ollama node)
+@app.get("/ollama/")
+async def ollama_root():
     """Root endpoint that mimics Ollama's default response"""
-    print("Root endpoint called")
+    print("Ollama root endpoint called")
     return "Ollama is running"
 
+@app.get("/ollama/api/tags")
+async def ollama_list_models():
+    """List local models by querying Ollama API"""
+    print("Endpoint called: /ollama/api/tags")
+    return await get_ollama_tags()
+
+@app.post("/ollama/api/chat")
+async def ollama_generate_text(request: ChatRequest):
+    """Ollama-compatible chat endpoint"""
+    print("Endpoint called: /ollama/api/chat")
+    return await Tools.generate_text(request.messages, queues, request.model, request.temperature)
+
+@app.post("/ollama/api/embed")
+async def ollama_generate_embeddings():
+    """Generate embeddings"""
+    print("Endpoint called: /ollama/api/embed")
+    return {"embeddings": []}
+
+# Health check endpoint
 @app.get("/health")
 async def health_check():
     """Basic health check endpoint"""
