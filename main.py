@@ -73,11 +73,6 @@ async def health_check():
 async def api_generate_image(prompt: str, model: str = "Flux-Dev", step: int = 50, size: str = "640x360"):
     return await Tools.generate_image(prompt, queues, model, step, size)
 
-@app.post("/api/chat")
-async def api_generate_text(request: ChatRequest):
-    print("Endpoint called: /api/chat")
-    return await Tools.generate_text(request.messages, queues, request.model, request.temperature)
-
 
 # Create MCP server
 mcp = FastMCP("N8N Tools")
